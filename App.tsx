@@ -67,72 +67,72 @@ const App: React.FC = () => {
       let minDiffX = SNAP_THRESHOLD;
       let minDiffY = SNAP_THRESHOLD;
 
-      // --- 1. Screen Edges ---
-      // Left
-      if (Math.abs(targetX) < minDiffX) {
-          newX = 0;
-          minDiffX = Math.abs(targetX);
+      // Current Window Points
+      const curLeft = targetX;
+      const curRight = targetX + width;
+      const curCenterX = targetX + width / 2;
+      
+      const curTop = targetY;
+      const curBottom = targetY + height;
+      const curCenterY = targetY + height / 2;
+
+      // --- 1. Screen Snapping ---
+      
+      // Screen Edges
+      if (Math.abs(curLeft) < minDiffX) { newX = 0; minDiffX = Math.abs(curLeft); }
+      if (Math.abs(window.innerWidth - curRight) < minDiffX) { newX = window.innerWidth - width; minDiffX = Math.abs(window.innerWidth - curRight); }
+      
+      if (Math.abs(curTop) < minDiffY) { newY = 0; minDiffY = Math.abs(curTop); }
+      if (Math.abs(window.innerHeight - curBottom) < minDiffY) { newY = window.innerHeight - height; minDiffY = Math.abs(window.innerHeight - curBottom); }
+
+      // Screen Center
+      const screenCenterX = window.innerWidth / 2;
+      const screenCenterY = window.innerHeight / 2;
+
+      if (Math.abs(curCenterX - screenCenterX) < minDiffX) {
+        newX = screenCenterX - width / 2;
+        minDiffX = Math.abs(curCenterX - screenCenterX);
       }
-      // Top
-      if (Math.abs(targetY) < minDiffY) {
-          newY = 0;
-          minDiffY = Math.abs(targetY);
-      }
-      // Right
-      if (Math.abs(window.innerWidth - (targetX + width)) < minDiffX) {
-          newX = window.innerWidth - width;
-          minDiffX = Math.abs(window.innerWidth - (targetX + width));
-      }
-      // Bottom
-      if (Math.abs(window.innerHeight - (targetY + height)) < minDiffY) {
-          newY = window.innerHeight - height;
-          minDiffY = Math.abs(window.innerHeight - (targetY + height));
+      if (Math.abs(curCenterY - screenCenterY) < minDiffY) {
+        newY = screenCenterY - height / 2;
+        minDiffY = Math.abs(curCenterY - screenCenterY);
       }
 
-      // --- 2. Other Windows ---
+      // --- 2. Other Windows Snapping ---
       prev.forEach(other => {
         if (other.id === id || !other.isOpen || other.isMinimized) return;
         
         const otherL = other.position.x;
         const otherR = other.position.x + other.size.width;
+        const otherCenterX = other.position.x + other.size.width / 2;
+
         const otherT = other.position.y;
         const otherB = other.position.y + other.size.height;
+        const otherCenterY = other.position.y + other.size.height / 2;
 
-        // X Snapping
-        if (Math.abs(targetX - otherR) < minDiffX) {
-           newX = otherR;
-           minDiffX = Math.abs(targetX - otherR);
-        }
-        if (Math.abs((targetX + width) - otherL) < minDiffX) {
-           newX = otherL - width;
-           minDiffX = Math.abs((targetX + width) - otherL);
-        }
-        if (Math.abs(targetX - otherL) < minDiffX) {
-           newX = otherL;
-           minDiffX = Math.abs(targetX - otherL);
-        }
-        if (Math.abs((targetX + width) - otherR) < minDiffX) {
-           newX = otherR - width;
-           minDiffX = Math.abs((targetX + width) - otherR);
-        }
+        // X Snapping (Edges & Center)
+        // Snap Left to Right
+        if (Math.abs(curLeft - otherR) < minDiffX) { newX = otherR; minDiffX = Math.abs(curLeft - otherR); }
+        // Snap Right to Left
+        if (Math.abs(curRight - otherL) < minDiffX) { newX = otherL - width; minDiffX = Math.abs(curRight - otherL); }
+        // Snap Left to Left (Align Left)
+        if (Math.abs(curLeft - otherL) < minDiffX) { newX = otherL; minDiffX = Math.abs(curLeft - otherL); }
+        // Snap Right to Right (Align Right)
+        if (Math.abs(curRight - otherR) < minDiffX) { newX = otherR - width; minDiffX = Math.abs(curRight - otherR); }
+        // Snap Center to Center
+        if (Math.abs(curCenterX - otherCenterX) < minDiffX) { newX = otherCenterX - width / 2; minDiffX = Math.abs(curCenterX - otherCenterX); }
 
-        // Y Snapping
-        if (Math.abs(targetY - otherB) < minDiffY) {
-           newY = otherB;
-           minDiffY = Math.abs(targetY - otherB);
-        }
-        if (Math.abs((targetY + height) - otherT) < minDiffY) {
-           newY = otherT - height;
-           minDiffY = Math.abs((targetY + height) - otherT);
-        }
-        if (Math.abs(targetY - otherT) < minDiffY) {
-           newY = otherT;
-           minDiffY = Math.abs(targetY - otherT);
-        }
-        if (Math.abs((targetY + height) - otherB) < minDiffY) {
-           newY = otherB - height;
-           minDiffY = Math.abs((targetY + height) - otherB);
-        }
+        // Y Snapping (Edges & Center)
+        // Snap Top to Bottom
+        if (Math.abs(curTop - otherB) < minDiffY) { newY = otherB; minDiffY = Math.abs(curTop - otherB); }
+        // Snap Bottom to Top
+        if (Math.abs(curBottom - otherT) < minDiffY) { newY = otherT - height; minDiffY = Math.abs(curBottom - otherT); }
+        // Snap Top to Top (Align Top)
+        if (Math.abs(curTop - otherT) < minDiffY) { newY = otherT; minDiffY = Math.abs(curTop - otherT); }
+        // Snap Bottom to Bottom (Align Bottom)
+        if (Math.abs(curBottom - otherB) < minDiffY) { newY = otherB - height; minDiffY = Math.abs(curBottom - otherB); }
+        // Snap Center to Center
+        if (Math.abs(curCenterY - otherCenterY) < minDiffY) { newY = otherCenterY - height / 2; minDiffY = Math.abs(curCenterY - otherCenterY); }
       });
 
       return prev.map(w => w.id === id ? { ...w, position: { x: newX, y: newY } } : w);
