@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Minus, Maximize2 } from 'lucide-react';
+import { X, Minus, Maximize2, GripHorizontal } from 'lucide-react';
 import { WindowState } from '../../types';
 import { GlassCard } from '../ui/GlassCard';
 
@@ -25,6 +25,7 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
   children 
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const frameRef = useRef<HTMLDivElement>(null);
   
   const dragOffset = useRef({ x: 0, y: 0 });
@@ -37,6 +38,7 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
   }, [windowState.position, isDragging]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    // Only allow drag from the top zone
     e.stopPropagation();
     onFocus(windowState.id);
     
@@ -96,38 +98,65 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
         width: windowState.size.width,
         height: windowState.size.height,
         zIndex: windowState.zIndex,
-        transition: isDragging ? 'none' : 'width 0.3s, height 0.3s'
+        transition: isDragging ? 'none' : 'width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)'
       }}
       className="flex flex-col group will-change-transform"
       onMouseDown={() => onFocus(windowState.id)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <GlassCard className={`
-        h-full flex flex-col !rounded-xl !border-white/10 shadow-2xl ring-1 ring-black/50 overflow-hidden
-        ${isDragging ? 'scale-95 opacity-80 shadow-cyan-500/20 cursor-grabbing' : ''}
+      <div className={`
+        relative h-full flex flex-col rounded-[2rem] overflow-hidden transition-all duration-300
+        ${isDragging ? 'scale-[0.98] opacity-90 shadow-[0_0_50px_rgba(0,0,0,0.5)] cursor-grabbing' : 'shadow-[0_20px_60px_rgba(0,0,0,0.6)]'}
       `}>
-        {/* Minimal Header */}
+        
+        {/* Glass Background Layer */}
+        <div className="absolute inset-0 bg-[#1a1b26]/80 backdrop-blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+        
+        {/* Gesture/Drag Zone (Invisible Header) */}
         <div 
-          className="h-9 flex items-center justify-between px-4 cursor-grab active:cursor-grabbing select-none bg-gradient-to-r from-white/5 to-transparent"
+          className="relative h-8 w-full z-20 cursor-grab active:cursor-grabbing flex justify-center items-center group/header"
           onMouseDown={handleMouseDown}
         >
-            <div className="flex items-center gap-3">
-                <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button onClick={(e) => { e.stopPropagation(); onClose(windowState.id); }} className="w-3 h-3 rounded-full bg-red-500/20 hover:bg-red-500 border border-red-500/30 text-transparent hover:text-black flex items-center justify-center transition-all">
-                        <X size={8} strokeWidth={3} />
-                    </button>
-                    <button onClick={(e) => { e.stopPropagation(); onMinimize(windowState.id); }} className="w-3 h-3 rounded-full bg-yellow-500/20 hover:bg-yellow-500 border border-yellow-500/30 text-transparent hover:text-black flex items-center justify-center transition-all">
-                        <Minus size={8} strokeWidth={3} />
-                    </button>
-                </div>
-                <span className="text-[12px] font-medium text-slate-400/80 tracking-wide">{windowState.title}</span>
+            {/* Subtle Handle that appears on hover */}
+            <div className={`w-12 h-1 rounded-full bg-white/20 transition-all duration-300 ${isHovered ? 'opacity-100 w-16' : 'opacity-0'}`} />
+            
+            {/* Window Controls - Floating outside content flow */}
+            <div className={`absolute right-4 top-4 flex gap-2 transition-all duration-300 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+                 <button 
+                    onClick={(e) => { e.stopPropagation(); onMinimize(windowState.id); }}
+                    className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors backdrop-blur-md"
+                >
+                    <Minus size={14} />
+                 </button>
+                 <button 
+                    onClick={(e) => { e.stopPropagation(); onClose(windowState.id); }}
+                    className="w-8 h-8 rounded-full bg-white/5 hover:bg-red-500/20 flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors backdrop-blur-md"
+                >
+                    <X size={14} />
+                 </button>
             </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-hidden relative bg-black/40">
+        {/* Content Container */}
+        <div className="relative flex-1 overflow-hidden z-10">
            {children}
         </div>
-      </GlassCard>
+        
+        {/* Subtle Border Glow */}
+        <div className="absolute inset-0 rounded-[2rem] border border-white/10 pointer-events-none" />
+      </div>
+      
+      {/* Floating Label (Shows on hover below window) */}
+      <div className={`
+        absolute -bottom-8 left-1/2 -translate-x-1/2 
+        bg-black/60 backdrop-blur-md text-slate-300 text-[10px] tracking-widest uppercase font-medium px-3 py-1 rounded-full border border-white/5
+        transition-all duration-300 pointer-events-none
+        ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}
+      `}>
+        {windowState.title}
+      </div>
     </div>
   );
 };
