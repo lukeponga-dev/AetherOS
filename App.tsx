@@ -52,8 +52,99 @@ const App: React.FC = () => {
     setWindows(prev => prev.map(w => w.id === id ? { ...w, zIndex: getNextZIndex() } : w));
   };
 
-  const updateWindowPosition = (id: string, x: number, y: number) => {
-    setWindows(prev => prev.map(w => w.id === id ? { ...w, position: { x, y } } : w));
+  const updateWindowPosition = (id: string, targetX: number, targetY: number) => {
+    setWindows(prev => {
+      const activeWindow = prev.find(w => w.id === id);
+      if (!activeWindow) return prev;
+
+      const { width, height } = activeWindow.size;
+      const SNAP_THRESHOLD = 20;
+      
+      let newX = targetX;
+      let newY = targetY;
+
+      // Find closest snap points
+      let minDiffX = SNAP_THRESHOLD;
+      let minDiffY = SNAP_THRESHOLD;
+
+      // --- 1. Screen Edges ---
+      // Left
+      if (Math.abs(targetX) < minDiffX) {
+          newX = 0;
+          minDiffX = Math.abs(targetX);
+      }
+      // Top
+      if (Math.abs(targetY) < minDiffY) {
+          newY = 0;
+          minDiffY = Math.abs(targetY);
+      }
+      // Right
+      if (Math.abs(window.innerWidth - (targetX + width)) < minDiffX) {
+          newX = window.innerWidth - width;
+          minDiffX = Math.abs(window.innerWidth - (targetX + width));
+      }
+      // Bottom
+      if (Math.abs(window.innerHeight - (targetY + height)) < minDiffY) {
+          newY = window.innerHeight - height;
+          minDiffY = Math.abs(window.innerHeight - (targetY + height));
+      }
+
+      // --- 2. Other Windows ---
+      prev.forEach(other => {
+        if (other.id === id || !other.isOpen || other.isMinimized) return;
+        
+        const otherL = other.position.x;
+        const otherR = other.position.x + other.size.width;
+        const otherT = other.position.y;
+        const otherB = other.position.y + other.size.height;
+
+        // X Snapping
+        // Snap Left side to Right side of other
+        if (Math.abs(targetX - otherR) < minDiffX) {
+           newX = otherR;
+           minDiffX = Math.abs(targetX - otherR);
+        }
+        // Snap Right side to Left side of other
+        if (Math.abs((targetX + width) - otherL) < minDiffX) {
+           newX = otherL - width;
+           minDiffX = Math.abs((targetX + width) - otherL);
+        }
+        // Snap Left to Left (Alignment)
+        if (Math.abs(targetX - otherL) < minDiffX) {
+           newX = otherL;
+           minDiffX = Math.abs(targetX - otherL);
+        }
+         // Snap Right to Right (Alignment)
+        if (Math.abs((targetX + width) - otherR) < minDiffX) {
+           newX = otherR - width;
+           minDiffX = Math.abs((targetX + width) - otherR);
+        }
+
+        // Y Snapping
+        // Snap Top to Bottom of other
+        if (Math.abs(targetY - otherB) < minDiffY) {
+           newY = otherB;
+           minDiffY = Math.abs(targetY - otherB);
+        }
+        // Snap Bottom to Top of other
+        if (Math.abs((targetY + height) - otherT) < minDiffY) {
+           newY = otherT - height;
+           minDiffY = Math.abs((targetY + height) - otherT);
+        }
+        // Snap Top to Top (Alignment)
+        if (Math.abs(targetY - otherT) < minDiffY) {
+           newY = otherT;
+           minDiffY = Math.abs(targetY - otherT);
+        }
+        // Snap Bottom to Bottom (Alignment)
+        if (Math.abs((targetY + height) - otherB) < minDiffY) {
+           newY = otherB - height;
+           minDiffY = Math.abs((targetY + height) - otherB);
+        }
+      });
+
+      return prev.map(w => w.id === id ? { ...w, position: { x: newX, y: newY } } : w);
+    });
   };
 
   const getNextZIndex = () => {
