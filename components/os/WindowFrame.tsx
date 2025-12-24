@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Minus, Square } from 'lucide-react';
+import { X, Minus, Maximize2 } from 'lucide-react';
 import { WindowState } from '../../types';
 import { GlassCard } from '../ui/GlassCard';
 
@@ -7,7 +7,10 @@ interface WindowFrameProps {
   windowState: WindowState;
   onClose: (id: string) => void;
   onFocus: (id: string) => void;
+  onMinimize: (id: string) => void;
   onUpdatePosition: (id: string, x: number, y: number) => void;
+  onDragStart?: (id: string) => void;
+  onDragEnd?: (id: string) => void;
   children: React.ReactNode;
 }
 
@@ -15,37 +18,59 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
   windowState, 
   onClose, 
   onFocus, 
+  onMinimize,
   onUpdatePosition,
+  onDragStart,
+  onDragEnd,
   children 
 }) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const frameRef = useRef<HTMLDivElement>(null);
+  
+  const dragOffset = useRef({ x: 0, y: 0 });
+  const currentPos = useRef({ x: windowState.position.x, y: windowState.position.y });
+
+  useEffect(() => {
+    if (!isDragging) {
+      currentPos.current = windowState.position;
+    }
+  }, [windowState.position, isDragging]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent focusing app underneath if clicking title bar
+    e.stopPropagation();
     onFocus(windowState.id);
+    
     setIsDragging(true);
-    setDragOffset({
-      x: e.clientX - windowState.position.x,
-      y: e.clientY - windowState.position.y
-    });
+    
+    const rect = frameRef.current?.getBoundingClientRect();
+    if (rect) {
+        dragOffset.current = {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
+        };
+    }
+    onDragStart?.(windowState.id);
   };
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
+      if (!isDragging || !frameRef.current) return;
+      e.preventDefault(); 
       
-      const newX = e.clientX - dragOffset.x;
-      const newY = e.clientY - dragOffset.y;
+      const newX = e.clientX - dragOffset.current.x;
+      const newY = Math.max(0, e.clientY - dragOffset.current.y);
       
-      const clampedY = Math.max(0, newY); // Don't go above screen
+      frameRef.current.style.left = `${newX}px`;
+      frameRef.current.style.top = `${newY}px`;
       
-      onUpdatePosition(windowState.id, newX, clampedY);
+      currentPos.current = { x: newX, y: newY };
     };
 
     const handleMouseUp = () => {
+      if (!isDragging) return;
       setIsDragging(false);
+      onDragEnd?.(windowState.id);
+      onUpdatePosition(windowState.id, currentPos.current.x, currentPos.current.y);
     };
 
     if (isDragging) {
@@ -57,11 +82,7 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragOffset, onUpdatePosition, windowState.id]);
-
-  const handleContentClick = () => {
-    onFocus(windowState.id);
-  };
+  }, [isDragging, onUpdatePosition, windowState.id, onDragEnd]);
 
   if (!windowState.isOpen || windowState.isMinimized) return null;
 
@@ -75,36 +96,36 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
         width: windowState.size.width,
         height: windowState.size.height,
         zIndex: windowState.zIndex,
+        transition: isDragging ? 'none' : 'width 0.3s, height 0.3s'
       }}
-      className="flex flex-col transition-shadow duration-300"
-      onMouseDown={handleContentClick}
+      className="flex flex-col group will-change-transform"
+      onMouseDown={() => onFocus(windowState.id)}
     >
-      <GlassCard className="h-full flex flex-col !rounded-lg !border-white/10 shadow-2xl ring-1 ring-black/50">
-        {/* Title Bar - Sleek & Dark */}
+      <GlassCard className={`
+        h-full flex flex-col !rounded-xl !border-white/10 shadow-2xl ring-1 ring-black/50 overflow-hidden
+        ${isDragging ? 'scale-95 opacity-80 shadow-cyan-500/20 cursor-grabbing' : ''}
+      `}>
+        {/* Minimal Header */}
         <div 
-          className="h-9 flex items-center justify-between px-3 cursor-grab active:cursor-grabbing select-none border-b border-white/5 bg-black/40"
+          className="h-9 flex items-center justify-between px-4 cursor-grab active:cursor-grabbing select-none bg-gradient-to-r from-white/5 to-transparent"
           onMouseDown={handleMouseDown}
         >
-          <span className="text-[11px] font-medium tracking-wider text-slate-400 uppercase flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-white/20"></span>
-            {windowState.title}
-          </span>
-          
-          <div className="flex items-center gap-3 text-slate-500">
-             <button className="hover:text-white transition-colors"><Minus size={12} /></button>
-             <button className="hover:text-white transition-colors"><Square size={10} /></button>
-             <button 
-                className="hover:text-red-400 transition-colors"
-                onClick={(e) => { e.stopPropagation(); onClose(windowState.id); }}
-             >
-                <X size={12} />
-             </button>
-          </div>
+            <div className="flex items-center gap-3">
+                <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <button onClick={(e) => { e.stopPropagation(); onClose(windowState.id); }} className="w-3 h-3 rounded-full bg-red-500/20 hover:bg-red-500 border border-red-500/30 text-transparent hover:text-black flex items-center justify-center transition-all">
+                        <X size={8} strokeWidth={3} />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); onMinimize(windowState.id); }} className="w-3 h-3 rounded-full bg-yellow-500/20 hover:bg-yellow-500 border border-yellow-500/30 text-transparent hover:text-black flex items-center justify-center transition-all">
+                        <Minus size={8} strokeWidth={3} />
+                    </button>
+                </div>
+                <span className="text-[12px] font-medium text-slate-400/80 tracking-wide">{windowState.title}</span>
+            </div>
         </div>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-hidden relative bg-black/20">
-          {children}
+        {/* Content */}
+        <div className="flex-1 overflow-hidden relative bg-black/40">
+           {children}
         </div>
       </GlassCard>
     </div>

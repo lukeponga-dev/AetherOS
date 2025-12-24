@@ -1,6 +1,6 @@
 import React from 'react';
-import { AppId, FileItem } from './types';
-import { LayoutGrid, Sparkles, FolderGit2, FileText, Settings, Zap } from 'lucide-react';
+import { AppId, FileItem, WindowState } from './types';
+import { Sparkles, FolderGit2, FileText, Zap, Globe, Palette } from 'lucide-react';
 
 export const INITIAL_FILES: FileItem[] = [
   { id: '1', name: 'Q3_Financial_Report.pdf', type: 'doc', date: '2 days ago', tags: ['finance', 'work'], size: '2.4 MB' },
@@ -12,21 +12,23 @@ export const INITIAL_FILES: FileItem[] = [
 ];
 
 export const APP_CONFIG = {
-  [AppId.OMNI]: { title: 'Omni Assistant', icon: <Sparkles className="w-6 h-6" />, defaultSize: { width: 500, height: 600 } },
-  [AppId.MEMORIES]: { title: 'Memories', icon: <FolderGit2 className="w-6 h-6" />, defaultSize: { width: 800, height: 550 } },
-  [AppId.FLOW]: { title: 'Flow Automations', icon: <Zap className="w-6 h-6" />, defaultSize: { width: 450, height: 500 } },
-  [AppId.NOTEPAD]: { title: 'Notes', icon: <FileText className="w-6 h-6" />, defaultSize: { width: 400, height: 400 } },
+  [AppId.OMNI]: { title: 'Omni Intelligence', icon: <Sparkles className="w-5 h-5" />, defaultSize: { width: 480, height: 650 } },
+  [AppId.MEMORIES]: { title: 'Memories', icon: <FolderGit2 className="w-5 h-5" />, defaultSize: { width: 850, height: 600 } },
+  [AppId.FLOW]: { title: 'Flow Automations', icon: <Zap className="w-5 h-5" />, defaultSize: { width: 500, height: 600 } },
+  [AppId.NOTEPAD]: { title: 'Notes', icon: <FileText className="w-5 h-5" />, defaultSize: { width: 500, height: 500 } },
+  [AppId.BROWSER]: { title: 'Quantum Browser', icon: <Globe className="w-5 h-5" />, defaultSize: { width: 900, height: 650 } },
+  [AppId.STUDIO]: { title: 'Creative Studio', icon: <Palette className="w-5 h-5" />, defaultSize: { width: 800, height: 700 } },
 };
 
-export const INITIAL_WINDOWS = [
+export const INITIAL_WINDOWS: WindowState[] = [
   {
     id: 'win-home',
     appId: AppId.OMNI,
-    title: 'Omni',
+    title: 'Omni Intelligence',
     isOpen: true,
     isMinimized: false,
     zIndex: 10,
-    position: { x: window.innerWidth / 2 - 250, y: 100 },
-    size: { width: 500, height: 600 },
+    position: { x: window.innerWidth / 2 - 240, y: window.innerHeight / 2 - 325 },
+    size: { width: 480, height: 650 }
   }
 ];
