@@ -6,7 +6,7 @@ import { Dock } from './components/os/Dock';
 import { OmniAssistant } from './components/apps/OmniAssistant';
 import { Memories } from './components/apps/Memories';
 import { FlowAutomation } from './components/apps/FlowAutomation';
-import { FileText } from 'lucide-react';
+import { FileText, Wifi, Battery } from 'lucide-react';
 
 const App: React.FC = () => {
   const [windows, setWindows] = useState<WindowState[]>(INITIAL_WINDOWS);
@@ -99,44 +99,36 @@ const App: React.FC = () => {
         const otherB = other.position.y + other.size.height;
 
         // X Snapping
-        // Snap Left side to Right side of other
         if (Math.abs(targetX - otherR) < minDiffX) {
            newX = otherR;
            minDiffX = Math.abs(targetX - otherR);
         }
-        // Snap Right side to Left side of other
         if (Math.abs((targetX + width) - otherL) < minDiffX) {
            newX = otherL - width;
            minDiffX = Math.abs((targetX + width) - otherL);
         }
-        // Snap Left to Left (Alignment)
         if (Math.abs(targetX - otherL) < minDiffX) {
            newX = otherL;
            minDiffX = Math.abs(targetX - otherL);
         }
-         // Snap Right to Right (Alignment)
         if (Math.abs((targetX + width) - otherR) < minDiffX) {
            newX = otherR - width;
            minDiffX = Math.abs((targetX + width) - otherR);
         }
 
         // Y Snapping
-        // Snap Top to Bottom of other
         if (Math.abs(targetY - otherB) < minDiffY) {
            newY = otherB;
            minDiffY = Math.abs(targetY - otherB);
         }
-        // Snap Bottom to Top of other
         if (Math.abs((targetY + height) - otherT) < minDiffY) {
            newY = otherT - height;
            minDiffY = Math.abs((targetY + height) - otherT);
         }
-        // Snap Top to Top (Alignment)
         if (Math.abs(targetY - otherT) < minDiffY) {
            newY = otherT;
            minDiffY = Math.abs(targetY - otherT);
         }
-        // Snap Bottom to Bottom (Alignment)
         if (Math.abs((targetY + height) - otherB) < minDiffY) {
            newY = otherB - height;
            minDiffY = Math.abs((targetY + height) - otherB);
@@ -184,27 +176,30 @@ const App: React.FC = () => {
         return <FlowAutomation />;
       case AppId.NOTEPAD:
         return (
-          <div className="p-4 h-full bg-white/50">
+          <div className="p-4 h-full bg-slate-900/50 text-slate-200">
             <textarea 
-              className="w-full h-full bg-transparent outline-none resize-none font-mono text-sm" 
+              className="w-full h-full bg-transparent outline-none resize-none font-mono text-sm leading-relaxed" 
               placeholder="Start typing..." 
               defaultValue={window.context?.content || ''}
             />
           </div>
         );
       default:
-        return <div className="p-10 text-center">App Content Not Loaded</div>;
+        return <div className="p-10 text-center text-slate-400">App Content Not Loaded</div>;
     }
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-slate-100 font-sans text-slate-900 selection:bg-blue-500 selection:text-white">
-      {/* Dynamic Mesh Gradient Background */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-400/30 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute top-[20%] right-[-10%] w-[60%] h-[60%] bg-blue-400/30 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '10s' }} />
-        <div className="absolute bottom-[-10%] left-[20%] w-[40%] h-[40%] bg-pink-400/30 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '12s' }} />
-        <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px]" />
+    <div className="relative w-screen h-screen overflow-hidden bg-slate-950 font-sans text-slate-100 selection:bg-cyan-500/30 selection:text-cyan-100">
+      {/* Deep Obsidian Gradient Background */}
+      <div className="absolute inset-0 z-0 bg-[#020617]">
+        {/* Subtle nebulae */}
+        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-indigo-900/20 rounded-full blur-[150px] animate-pulse" style={{ animationDuration: '15s' }} />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-violet-900/10 rounded-full blur-[150px] animate-pulse" style={{ animationDuration: '20s' }} />
+        <div className="absolute top-[30%] left-[30%] w-[40%] h-[40%] bg-slate-800/20 rounded-full blur-[100px]" />
+        
+        {/* Noise overlay for texture */}
+        <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
       </div>
 
       {/* OS Desktop Layer */}
@@ -224,12 +219,21 @@ const App: React.FC = () => {
 
       <Dock onOpenApp={openApp} activeAppId={activeWindowId ? windows.find(w => w.id === activeWindowId)?.appId || null : null} />
       
-      {/* Top Bar for aesthetics */}
-      <div className="fixed top-0 left-0 w-full h-8 flex justify-between items-center px-6 z-50 pointer-events-none">
-        <span className="text-xs font-semibold tracking-widest opacity-40 mix-blend-difference text-white">AETHER OS v1.0</span>
-        <div className="flex gap-4 text-xs font-medium opacity-60 mix-blend-difference text-white">
-          <span>5G</span>
-          <span>100%</span>
+      {/* Top Bar - Minimal Status */}
+      <div className="fixed top-0 left-0 w-full h-10 flex justify-between items-center px-6 z-50 pointer-events-none select-none">
+        <div className="flex items-center gap-4">
+            <span className="text-[10px] font-bold tracking-[0.2em] opacity-50 text-white uppercase">Aether OS</span>
+        </div>
+        <div className="flex gap-6 text-[11px] font-medium opacity-60 text-white items-center">
+          <div className="flex items-center gap-2">
+            <Wifi size={14} />
+            <span>5G</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span>100%</span>
+            <Battery size={14} />
+          </div>
+          <span>Oct 24 2:45 PM</span>
         </div>
       </div>
     </div>

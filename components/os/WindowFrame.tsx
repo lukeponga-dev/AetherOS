@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Minus, Maximize2 } from 'lucide-react';
+import { X, Minus, Square } from 'lucide-react';
 import { WindowState } from '../../types';
 import { GlassCard } from '../ui/GlassCard';
 
@@ -39,7 +39,6 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
       const newX = e.clientX - dragOffset.x;
       const newY = e.clientY - dragOffset.y;
       
-      // Simple boundary checking
       const clampedY = Math.max(0, newY); // Don't go above screen
       
       onUpdatePosition(windowState.id, newX, clampedY);
@@ -60,7 +59,6 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
     };
   }, [isDragging, dragOffset, onUpdatePosition, windowState.id]);
 
-  // Handle z-index and focus on click inside content
   const handleContentClick = () => {
     onFocus(windowState.id);
   };
@@ -81,25 +79,31 @@ export const WindowFrame: React.FC<WindowFrameProps> = ({
       className="flex flex-col transition-shadow duration-300"
       onMouseDown={handleContentClick}
     >
-      <GlassCard className="h-full flex flex-col !rounded-2xl !border-white/40 shadow-2xl ring-1 ring-white/20">
-        {/* Title Bar */}
+      <GlassCard className="h-full flex flex-col !rounded-lg !border-white/10 shadow-2xl ring-1 ring-black/50">
+        {/* Title Bar - Sleek & Dark */}
         <div 
-          className="h-10 flex items-center justify-between px-4 cursor-grab active:cursor-grabbing select-none border-b border-white/10 bg-white/5"
+          className="h-9 flex items-center justify-between px-3 cursor-grab active:cursor-grabbing select-none border-b border-white/5 bg-black/40"
           onMouseDown={handleMouseDown}
         >
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-400/80 hover:bg-red-500 cursor-pointer shadow-inner" onClick={(e) => { e.stopPropagation(); onClose(windowState.id); }} />
-            <div className="w-3 h-3 rounded-full bg-amber-400/80 hover:bg-amber-500 cursor-pointer shadow-inner" />
-            <div className="w-3 h-3 rounded-full bg-green-400/80 hover:bg-green-500 cursor-pointer shadow-inner" />
-          </div>
-          <span className="text-xs font-medium tracking-wide text-slate-600 dark:text-slate-300 opacity-80 uppercase">
+          <span className="text-[11px] font-medium tracking-wider text-slate-400 uppercase flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-white/20"></span>
             {windowState.title}
           </span>
-          <div className="w-10" /> {/* Spacer for balance */}
+          
+          <div className="flex items-center gap-3 text-slate-500">
+             <button className="hover:text-white transition-colors"><Minus size={12} /></button>
+             <button className="hover:text-white transition-colors"><Square size={10} /></button>
+             <button 
+                className="hover:text-red-400 transition-colors"
+                onClick={(e) => { e.stopPropagation(); onClose(windowState.id); }}
+             >
+                <X size={12} />
+             </button>
+          </div>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-hidden relative">
+        <div className="flex-1 overflow-hidden relative bg-black/20">
           {children}
         </div>
       </GlassCard>

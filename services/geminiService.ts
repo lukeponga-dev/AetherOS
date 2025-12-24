@@ -25,9 +25,10 @@ Maintain a helpful, futuristic, and concise persona in the "message" field.
 export const processUserIntent = async (input: string): Promise<AIResponse> => {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3-pro-preview",
       contents: input,
       config: {
+        thinkingConfig: { thinkingBudget: 32768 },
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
         responseSchema: {
